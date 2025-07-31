@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello from AutoTestLab! - Interactive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for the body and canvas */
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background-color: #000;
+            color: #fff;
+        }
+        canvas {
+            /* Fix the canvas to the background */
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+        }
+        /* Style for the custom cursor dot */
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.7);
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            transition: transform 0.1s ease-out;
+        }
+        /* Hide the default scrollbar but keep functionality */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        /* Content sections styling */
+        .content-section {
+            height: 100vh; /* Each section is a full screen height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+        /* Add perspective for 3D transforms */
+        #hero-content {
+            perspective: 800px;
+        }
+        /* Styling for the DevOps pipeline section */
+        #devops-pipeline {
+            transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        #devops-pipeline.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Pipeline animation styles */
+        .pipeline-node {
+            border: 1px solid rgba(167, 139, 250, 0.4);
+            transition: background-color 0.5s ease, border-color 0.5s ease;
+        }
+        .pipeline-node.active {
+            background-color: rgba(167, 139, 250, 0.2);
+            border-color: rgba(167, 139, 250, 1);
+        }
+        .pipeline-connector {
+            height: 2px;
+            width: 100%;
+            background: linear-gradient(90deg, rgba(167, 139, 250, 0.4), rgba(167, 139, 250, 0.4));
+            position: relative;
+        }
+        .pipeline-flow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            box-shadow: 0 0 10px #a78bfa;
+            transition: width 1s ease-in-out;
+        }
+        
+        /* Rotating Text Entry Animation */
+        @keyframes text-entry {
+            from {
+                opacity: 0;
+                transform: translateY(50px) rotateX(-90deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0deg);
+            }
+        }
+        
+        /* This class sets the initial state for the entry animation */
+        .animate-text-entry {
+            opacity: 0; /* Start hidden to ensure animation is visible */
+            transform-style: preserve-3d;
+        }
+        
+        .animate-subtext-entry {
+             animation: text-entry 1s 0.5s ease-out forwards;
+             opacity: 0; /* Start hidden */
+             transform-style: preserve-3d;
+        }
+        
+        /* Neon Glow Effect from user example */
+        .neon-text {
+            color: #fff;
+            /* MODIFIED: Combined both animations to prevent override */
+            animation: glow 1.5s infinite alternate, text-entry 1s 0.2s ease-out forwards;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 5px #ff005e, 0 0 10px #ff005e, 0 0 20px #ff005e, 0 0 40px #ff005e, 0 0 80px #ff005e;
+            }
+            100% {
+                text-shadow: 0 0 10px #00d4ff, 0 0 20px #00d4ff, 0 0 40px #00d4ff, 0 0 80px #00d4ff, 0 0 160px #00d4ff;
+            }
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+
+    <div class="cursor-dot"></div>
+    <canvas id="grid-canvas"></canvas>
+
+    <main>
+        <section id="hero-section" class="content-section">
+            <div id="hero-content" class="text-center">
+                 <h1 id="hello-text" class="animate-text-entry neon-text text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">
+                    Hello from AutoTestLab!
+                </h1>
+                <p class="animate-subtext-entry mt-4 text-gray-400 text-lg">Scroll down to explore</p>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <div id="devops-pipeline" class="w-full max-w-4xl px-4">
+                <h2 class="text-center text-4xl md:text-5xl font-bold mb-12 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
+                    Automated CI/CD Pipeline
+                </h2>
+                <div class="flex items-center justify-center w-full">
+                    <div id="node-repo" class="pipeline-node flex flex-col items-center p-4 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400"><path d="M18 8a6 6 0 0 0-12 0v6a6 6 0 0 0 12 0v-6z"></path><path d="M22 8a10 10 0 0 0-20 0v6a10 10 0 0 0 20 0v-6z"></path><line x1="12" y1="2" x2="12" y2="8"></line><line x1="12" y1="14" x2="12" y2="22"></line></svg>
+                        <span class="mt-2 text-sm font-semibold">Code Repo</span>
+                    </div>
+
+                    <div class="flex-1 pipeline-connector mx-2"><div id="flow1" class="pipeline-flow"></div></div>
+
+                    <div id="node-build" class="pipeline-node flex flex-col items-center p-4 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        <span class="mt-2 text-sm font-semibold">Build</span>
+                    </div>
+
+                    <div class="flex-1 pipeline-connector mx-2"><div id="flow2" class="pipeline-flow"></div></div>
+
+                    <div id="node-test" class="pipeline-node flex flex-col items-center p-4 rounded-lg">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>
+                        <span class="mt-2 text-sm font-semibold">Test</span>
+                    </div>
+
+                    <div class="flex-1 pipeline-connector mx-2"><div id="flow3" class="pipeline-flow"></div></div>
+
+                    <div id="node-deploy" class="pipeline-node flex flex-col items-center p-4 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400"><path d="M2 12h20"></path><path d="M12 2a10 10 0 0 1 10 10c0 4.4-3.8 8-8.2 8.9"></path><path d="M12 22A10 10 0 0 1 2 12c0-4.4 3.8-8 8.2-8.9"></path></svg>
+                        <span class="mt-2 text-sm font-semibold">Deploy</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+
+    <script>
+        // --- Canvas and Digital Grid Animation Setup (unchanged) ---
+        const canvas = document.getElementById('grid-canvas');
+        const ctx = canvas.getContext('2d');
+        const cursorDot = document.querySelector('.cursor-dot');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const gridSize = 20;
+        const pointGap = canvas.width / 25;
+        let points = [];
+        let rotationX = 0, rotationY = 0;
+        const mouse = { x: 0, y: 0 };
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = (event.clientY / window.innerHeight) * 2 - 1;
+            cursorDot.style.left = event.clientX + 'px';
+            cursorDot.style.top = event.clientY + 'px';
+        });
+        class Point { constructor(x, y, z) { this.x = x; this.y = y; this.z = z; } }
+        function initGrid() {
+            points = [];
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    points.push(new Point((i - gridSize / 2) * pointGap, (j - gridSize / 2) * pointGap, -gridSize * 5));
+                }
+            }
+        }
+        function animateGrid() {
+            requestAnimationFrame(animateGrid);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            rotationX += 0.0005; rotationY += 0.0005;
+            const targetRotationX = mouse.y * 0.2;
+            const targetRotationY = mouse.x * 0.2;
+            rotationX += (targetRotationX - rotationX) * 0.05;
+            rotationY += (targetRotationY - rotationY) * 0.05;
+            const fov = 250;
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            points.forEach(point => {
+                const cosX = Math.cos(rotationX), sinX = Math.sin(rotationX);
+                const cosY = Math.cos(rotationY), sinY = Math.sin(rotationY);
+                const rotY_x = point.x * cosY - point.z * sinY, rotY_z = point.x * sinY + point.z * cosY;
+                const rotX_y = point.y * cosX - rotY_z * sinX, rotX_z = point.y * sinX + rotY_z * cosX;
+                const scale = fov / (fov + rotX_z);
+                const sx = rotY_x * scale, sy = rotX_y * scale;
+                const opacity = (rotX_z + gridSize * 5) / (gridSize * 10);
+                ctx.beginPath();
+                ctx.arc(sx, sy, scale * 1.5, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(167, 139, 250, ${Math.max(0, opacity)})`;
+                ctx.fill();
+            });
+            ctx.restore();
+        }
+
+        // --- Scroll-based Animation Logic ---
+        const heroContent = document.getElementById('hero-content');
+        const devopsPipeline = document.getElementById('devops-pipeline');
+        let pipelineAnimationTriggered = false;
+
+        function runPipelineAnimation() {
+            if (pipelineAnimationTriggered) return;
+            pipelineAnimationTriggered = true;
+
+            const nodes = ['repo', 'build', 'test', 'deploy'];
+            const flows = ['flow1', 'flow2', 'flow3'];
+            let currentIndex = 0;
+
+            function processNextNode() {
+                if (currentIndex >= nodes.length) {
+                    // Reset animation after a delay
+                    setTimeout(() => {
+                        pipelineAnimationTriggered = false;
+                        nodes.forEach(id => document.getElementById(`node-${id}`).classList.remove('active'));
+                        flows.forEach(id => document.getElementById(id).style.width = '0%');
+                    }, 4000);
+                    return;
+                }
+                
+                // Activate current node
+                document.getElementById(`node-${nodes[currentIndex]}`).classList.add('active');
+
+                // Activate flow to next node
+                if (currentIndex < flows.length) {
+                    setTimeout(() => {
+                        document.getElementById(flows[currentIndex]).style.width = '100%';
+                    }, 200);
+                }
+
+                // Move to next node after a delay
+                setTimeout(() => {
+                    currentIndex++;
+                    processNextNode();
+                }, 1000);
+            }
+            processNextNode();
+        }
+
+        function handleScroll() {
+            const scrollY = window.scrollY;
+            const viewportHeight = window.innerHeight;
+            
+            // Hero text animation is now handled by CSS keyframes on load
+            // This part handles the scroll-away effect
+            const scrollFraction = Math.min(1, scrollY / viewportHeight);
+            const scale = 1 - scrollFraction * 0.5;
+            const opacity = 1 - scrollFraction;
+            heroContent.style.transform = `scale(${scale})`;
+            heroContent.style.opacity = opacity;
+
+            // DevOps pipeline animation
+            const pipelineTop = devopsPipeline.parentElement.offsetTop;
+            if (scrollY > pipelineTop - viewportHeight / 1.5) {
+                devopsPipeline.classList.add('visible');
+                runPipelineAnimation();
+            } else {
+                devopsPipeline.classList.remove('visible');
+            }
+        }
+
+        // --- Event Listeners ---
+        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initGrid();
+        });
+
+        // --- Start everything ---
+        initGrid();
+        animateGrid();
+        handleScroll(); // Initial call to set positions
+    </script>
+</body>
+</html>
