@@ -7,11 +7,13 @@ stages:
 
 before_script:
   - pip install -r requirements.txt
+  - export PYTHONPATH=$PYTHONPATH:.
 
 test:
   stage: test
   script:
-    - pytest autotestlab/tests/
+    - export PYTHONPATH=$PYTHONPATH:.
+    - python -m pytest autotestlab/tests/
 
 bandit_scan:
   stage: security
@@ -19,6 +21,7 @@ bandit_scan:
     - bandit -r autotestlab -ll
 
 lint:
-  stage: lint
+  stage: test
   script:
+    - pip install flake8
     - flake8 autotestlab/
