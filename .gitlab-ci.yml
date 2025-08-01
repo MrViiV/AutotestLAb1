@@ -11,7 +11,7 @@ before_script:
 test:
   stage: test
   script:
-    - python -m pytest autotestlab/tests/
+    - pytest autotestlab/tests/
 
 bandit_scan:
   stage: security
@@ -19,7 +19,6 @@ bandit_scan:
     - bandit -r autotestlab -ll
 
 lint:
-  stage: test
+  stage: lint
   script:
-    - pip install flake8
     - flake8 autotestlab/
