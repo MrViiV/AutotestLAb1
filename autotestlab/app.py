@@ -17,8 +17,7 @@ def run_test():
         return jsonify({"message": "Test completed successfully!"}), 200
     except Exception:
         return jsonify({"message": "Error running test"}), 500
-    
+
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000) # nosec
-
+    app.run(debug=True, host="0.0.0.0", port=5000)  # nosec
