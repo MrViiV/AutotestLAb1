@@ -149,6 +149,58 @@
             transition: opacity 0.3s ease-in-out;
             font-weight: 500;
         }
+        /* History section styles */
+        #history-container {
+            width: 100%;
+            max-width: 56rem; /* max-w-4xl */
+            background-color: #0a0a0a;
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            opacity: 0;
+            max-height: 0;
+            margin-top: 0;
+            padding: 0;
+            transition: opacity 0.5s ease, max-height 0.5s ease, margin-top 0.5s ease, padding 0.5s ease;
+        }
+        #history-container.visible {
+            opacity: 1;
+            max-height: 300px;
+            margin-top: 1.5rem; /* mt-6 */
+            padding: 0.5rem;
+        }
+        #history-list {
+            text-align: left;
+        }
+        .history-item {
+            background-color: #111111;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem; /* text-sm */
+        }
+        .history-item.passed {
+            background-color: rgba(74, 222, 128, 0.05); /* bg-green-900/20 */
+            color: #a7f3d0; /* text-green-200 */
+            border-left: 4px solid #22c55e; /* border-green-500 */
+        }
+        .history-item.failed {
+            background-color: rgba(248, 113, 113, 0.05); /* bg-red-900/20 */
+            color: #fecaca; /* text-red-200 */
+            border-left: 4px solid #ef4444; /* border-red-500 */
+        }
+        .history-item pre {
+            margin-top: 0.5rem; /* mt-2 */
+            padding: 0.5rem; /* p-2 */
+            background-color: rgba(0,0,0,0.4); /* bg-black/40 */
+            color: #d1d5db; /* text-gray-300 */
+            border-radius: 0.25rem; /* rounded */
+            max-height: 12rem; /* max-h-48 */
+            overflow: auto;
+        }
     </style>
 </head>
 <body class="bg-black text-white">
@@ -167,7 +219,7 @@
         </section>
 
         <section class="content-section">
-            <div id="devops-pipeline-container" class="w-full max-w-4xl px-4 text-center">
+            <div id="devops-pipeline-container" class="w-full max-w-4xl px-4 flex flex-col items-center">
                 <h2 class="text-4xl md:text-5xl font-bold mb-12 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
                     Automated CI/CD Pipeline
                 </h2>
@@ -195,12 +247,17 @@
                 </div>
 
                 <!-- Button and Feedback Area -->
-                <div class="mt-12">
+                <div class="mt-12 text-center">
                     <button id="run-test-button" class="action-button font-semibold py-2 px-6 rounded-lg">
                         🚀 Run a Test
                     </button>
                     <!-- Feedback message element -->
                     <p id="test-feedback" class="mt-4 h-6 text-gray-400"></p>
+                </div>
+
+                <!-- History Section -->
+                <div id="history-container" class="text-center">
+                  <ul id="history-list" class="space-y-2"></ul>
                 </div>
 
             </div>
@@ -264,8 +321,10 @@
         const devopsPipelineContainer = document.getElementById('devops-pipeline-container');
         const runTestButton = document.getElementById('run-test-button');
         const testFeedback = document.getElementById('test-feedback');
+        const historyContainer = document.getElementById('history-container');
+        const historyList = document.getElementById('history-list');
         let pipelineAnimationTriggered = false;
-
+        
         function runPipelineAnimation() {
             if (pipelineAnimationTriggered) return;
             pipelineAnimationTriggered = true;
@@ -275,13 +334,11 @@
             const flows = ['flow1', 'flow2', 'flow3'];
             let currentIndex = 0;
             
-            // Reset visual state before starting
             nodes.forEach(id => document.getElementById(`node-${id}`).classList.remove('active'));
             flows.forEach(id => document.getElementById(id).style.width = '0%');
 
             function processNextNode() {
                 if (currentIndex >= nodes.length) {
-                    // Animation is complete, re-enable button after a short delay
                     setTimeout(() => {
                         pipelineAnimationTriggered = false;
                         runTestButton.disabled = false;
@@ -297,34 +354,66 @@
             processNextNode();
         }
         
-        // MODIFIED: This function now handles the API call and feedback
+        // MODIFIED: This function now uses the new UI from your example
+        async function loadHistory() {
+            try {
+                const res = await fetch("/history");
+                if (!res.ok) {
+                    console.error("Failed to fetch history:", res.statusText);
+                    return;
+                }
+                const history = await res.json();
+                const list = document.getElementById("history-list");
+                list.innerHTML = "";
+
+                history.slice().reverse().forEach(item => {
+                    const li = document.createElement("li");
+                    const itemClass = `history-item ${item.status === 'Passed' ? 'passed' : 'failed'}`;
+                    
+                    li.className = itemClass;
+                    li.innerHTML = `
+                      <div class="font-bold">🕒 ${new Date(item.timestamp).toLocaleString()}</div>
+                      <div class="mt-1"><strong>Status:</strong> ${item.status}</div>
+                      <pre>${item.stdout.substring(0, 800)}${item.stdout.length > 800 ? "..." : ""}</pre>
+                    `;
+                    list.appendChild(li);
+                });
+
+                if (history.length > 0 && !historyContainer.classList.contains('visible')) {
+                    historyContainer.classList.add('visible');
+                }
+            } catch (error) {
+                console.error("Error loading history:", error);
+            }
+        }
+
         function handleTestRun() {
             if (runTestButton.disabled) return;
             
             runPipelineAnimation();
             
             testFeedback.style.opacity = '1';
-            testFeedback.style.color = '#9ca3af'; // gray-400
+            testFeedback.style.color = '#9ca3af';
             testFeedback.innerText = '🧪 Running test...';
 
             fetch("/run-test", { method: 'POST' })
                 .then((res) => {
                     if (!res.ok) {
-                        // If response is not OK, treat it as an error
                         throw new Error(`API Error: ${res.statusText}`);
                     }
                     return res.json();
                 })
                 .then((data) => {
-                    testFeedback.style.color = '#4ade80'; // green-400
-                    testFeedback.innerText = `✅ ${data.message}`;
+                    testFeedback.style.color = '#4ade80';
+                    testFeedback.innerText = `✅ ${data.message || 'Test completed!'}`;
                 })
-                .catch(() => {
-                    testFeedback.style.color = '#f87171'; // red-400
+                .catch((error) => {
+                    console.error("Test run failed:", error);
+                    testFeedback.style.color = '#f87171';
                     testFeedback.innerText = "❌ Failed to run test";
                 })
                 .finally(() => {
-                    // Clear the message after a few seconds
+                    loadHistory(); // Refresh history after test is complete
                     setTimeout(() => {
                         testFeedback.style.opacity = '0';
                     }, 4000);
@@ -361,6 +450,7 @@
         initGrid();
         animateGrid();
         handleScroll();
+        loadHistory(); // Load initial history on page load
     </script>
 </body>
 </html>
