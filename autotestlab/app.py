@@ -1,12 +1,11 @@
 from flask import Flask, render_template, jsonify
-import subprocess  # for running tests
+import subprocess
 import json
 import os
 from datetime import datetime
 
 app = Flask(__name__)
-
-HISTORY_FILE = "autotestlab/test_history.json"
+HISTORY_FILE = os.path.join(os.path.dirname(__file__), "test_history.json")
 
 
 @app.route("/")
@@ -16,68 +15,89 @@ def index():
 
 @app.route("/run-test", methods=["POST"])
 def run_test():
+    timestamp = datetime.now().isoformat()
+    test_result = {
+        "timestamp": timestamp,
+        "returncode": None,
+        "stdout": "",
+        "stderr": "",
+        "status": "Failed"
+    }
+
     try:
-        # Environment and working directory info
         env = os.environ.copy()
         env["PYTHONPATH"] = os.getcwd()
-        cwd = os.getcwd()
 
         result = subprocess.run(
             ["pytest", "autotestlab/tests/", "--maxfail=1",
              "--disable-warnings"],
             capture_output=True,
             text=True,
-            cwd=cwd,
+            cwd=os.getcwd(),
             env=env
         )
-        timestamp = datetime.now().isoformat()
-        test_result = {
-            "timestamp": timestamp,
-            "returncode": result.returncode,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "status": "Passed" if result.returncode == 0 else "Failed"
-        }
 
-        # Save result
-        history_file = "autotestlab/test_history.json"
-        if os.path.exists(history_file):
-            with open(history_file, "r") as f:
-                history = json.load(f)
+        test_result["returncode"] = result.returncode
+        test_result["stdout"] = result.stdout
+        test_result["stderr"] = result.stderr
+        test_result["status"] = (
+            "Passed" if result.returncode == 0 else "Failed"
+        )
+
+        # Load existing history
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r") as f:
+                try:
+                    history = json.load(f)
+                except json.JSONDecodeError:
+                    history = []
         else:
             history = []
 
+        # Append and write
         history.append(test_result)
-        with open(history_file, "w") as f:
+        with open(HISTORY_FILE, "w") as f:
             json.dump(history, f, indent=4)
-            print("===> [DEBUG] Test result saved to file.")
 
         return jsonify({
             "message": f"Test {test_result['status']}",
             "details": test_result["stdout"],
-            "debug": result.stderr
+            "debug": test_result["stderr"]
         })
 
-    except Exception:
+    except Exception as e:
         return jsonify({
-            "message": f"Test {test_result['status']}",
-            "details": result.stdout.replace("\x1b", ""),  # Remove ANSI codes
-            "debug": result.stderr.replace("\x1b", "")
-        })
+            "message": "Error during test execution",
+            "error": str(e),
+            "details": test_result["stdout"],
+            "debug": test_result["stderr"]
+        }), 500
 
 
 @app.route("/history", methods=["GET"])
 def get_history():
     try:
-        history_file = "autotestlab/test_history.json"
-        if os.path.exists(history_file):
-            with open(history_file, "r") as f:
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r") as f:
                 history = json.load(f)
         else:
             history = []
         return jsonify(history)
     except Exception as e:
         return jsonify({"error": "Failed to read test history",
+                        "details": str(e)}), 500
+
+
+@app.route("/clear-history", methods=["DELETE"])
+def clear_history():
+    try:
+        history_file = "autotestlab/test_history.json"
+        if os.path.exists(history_file):
+            with open(history_file, "w") as f:
+                json.dump([], f)  # Overwrite with empty list
+        return jsonify({"message": "History cleared"}), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to clear history",
                         "details": str(e)}), 500
 
 
