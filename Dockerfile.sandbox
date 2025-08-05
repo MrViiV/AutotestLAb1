@@ -1,0 +1,13 @@
+# Dockerfile.sandbox
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install pytest
+RUN pip install --no-cache-dir pytest
+
+# Copy only what's needed for test execution
+COPY autotestlab/uploads autotestlab/uploads
+COPY test_runner.py .
+
+CMD ["python", "test_runner.py"]

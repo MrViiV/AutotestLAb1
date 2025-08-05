@@ -110,31 +110,42 @@ def upload_test():
     file.save(filepath)
 
     try:
+        # Run test using Docker sandbox
+        docker_cmd = [
+            "docker", "run", "--rm",
+            "-v", f"{os.path.abspath(UPLOAD_FOLDER)}:/app/autotestlab/uploads",
+            "autotest-sandbox"
+        ]
         result = subprocess.run(
-            ["pytest", filepath, "--disable-warnings"],
+            docker_cmd,
             capture_output=True,
-            text=True,
-            cwd=os.getcwd(),
-            env={**os.environ, "PYTHONPATH": os.getcwd()}
+            text=True
         )
 
-        timestamp = datetime.now().isoformat()
-        status, passed, failed = extract_test_stats(result.stdout)
+        stdout = result.stdout
+        stderr = result.stderr
+        returncode = result.returncode
 
+        # Basic status detection
+        status = "Passed" if "failed" not in stdout.lower() else "Failed"
+
+        # Save to history
+        timestamp = datetime.now().isoformat()
         test_result = {
             "timestamp": timestamp,
             "filename": filename,
-            "returncode": result.returncode,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "status": status,
-            "passed": passed,
-            "failed": failed
+            "returncode": returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+            "status": status
         }
 
         if os.path.exists(HISTORY_FILE):
             with open(HISTORY_FILE, "r") as f:
-                history = json.load(f)
+                try:
+                    history = json.load(f)
+                except json.JSONDecodeError:
+                    history = []
         else:
             history = []
 
@@ -144,13 +155,14 @@ def upload_test():
 
         return jsonify({
             "message": f"Uploaded Test {status}",
-            "details": result.stdout,
-            "passed": passed,
-            "failed": failed
+            "details": stdout
         })
 
     except Exception as e:
-        return jsonify({"message": "Upload failed", "error": str(e)}), 500
+        return jsonify({
+            "message": "Error running Docker sandbox test",
+            "error": str(e)
+        }), 500
 
 
 @app.route("/history", methods=["GET"])
