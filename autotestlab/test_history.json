@@ -1,1 +1,21 @@
-[]
+[
+    {
+        "timestamp": "2025-08-05T11:51:35.776983",
+        "returncode": 0,
+        "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.12.1, pytest-8.4.1, pluggy-1.6.0\nrootdir: /workspaces/AutotestLAb1\nplugins: anyio-4.9.0, html-4.1.1, metadata-3.1.1\ncollected 1 item\n\nautotestlab/tests/test_app.py .                                          [100%]\n\n============================== 1 passed in 0.09s ===============================\n",
+        "stderr": "",
+        "status": "Passed",
+        "passed": 1,
+        "failed": 0
+    },
+    {
+        "timestamp": "2025-08-05T11:51:44.163680",
+        "filename": "test_file.py",
+        "returncode": 1,
+        "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.12.1, pytest-8.4.1, pluggy-1.6.0\nrootdir: /workspaces/AutotestLAb1\nplugins: anyio-4.9.0, html-4.1.1, metadata-3.1.1\ncollected 7 items\n\nautotestlab/uploads/test_file.py ...F..F                                 [100%]\n\n=================================== FAILURES ===================================\n________________________________ test_fail_math ________________________________\n\n    def test_fail_math():\n>       assert 2 * 2 == 5  # \u274c Intentional fail\n        ^^^^^^^^^^^^^^^^^\nE       assert (2 * 2) == 5\n\nautotestlab/uploads/test_file.py:11: AssertionError\n____________________________ test_intentional_fail _____________________________\n\n    def test_intentional_fail():\n>       assert \"AutoTestLab\".islower()  # \u274c Intentional fail\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       AssertionError: assert False\nE        +  where False = <built-in method islower of str object at 0x709cc08e7230>()\nE        +    where <built-in method islower of str object at 0x709cc08e7230> = 'AutoTestLab'.islower\n\nautotestlab/uploads/test_file.py:22: AssertionError\n=========================== short test summary info ============================\nFAILED autotestlab/uploads/test_file.py::test_fail_math - assert (2 * 2) == 5\nFAILED autotestlab/uploads/test_file.py::test_intentional_fail - AssertionErr...\n========================= 2 failed, 5 passed in 0.04s ==========================\n",
+        "stderr": "",
+        "status": "Failed",
+        "passed": 5,
+        "failed": 2
+    }
+]
